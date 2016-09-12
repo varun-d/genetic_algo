@@ -3,7 +3,10 @@ Genetic Algorithm Playground
 
 First ever GA written after a 20 minute crash course by Daniel Shiffman. Spoiler alert, the following code does't work:
 
+Work in progress and new code will be shared here soon.
+
 ```python
+from multiprocessing import Process
 import urllib2
 import random
 import string
@@ -13,7 +16,7 @@ TARGET = 'varun'    # Target word or let's call it sequence of characters. For n
 POP_SIZE = 1000     # Population size
 MUTATION = 0.01     # Mutation proportion
 population = []     # Our world as an array of member dictionaries, with 'member' and 'fit_score'. 'member' is a char seq (a word)
-SD_MULTIPLIER = 2
+SD_MULTIPLIER = 1
 TARGET_BUILD = string.ascii_lowercase
 
 # Inception of time. Generate random words using only lowercase ASCII.
@@ -28,13 +31,13 @@ def generate_population(pop_list, size=len(TARGET), chars=TARGET_BUILD):
 
 def calc_fitness_score(word):
     char_list = list(word)
-    targ_list = list(TARGET)
+    target_list = list(TARGET)
     fit_score = 0
 
-    for c in char_list:
-        if c in targ_list: # if this char is in our target member
-            if char_list.index(c) == targ_list.index(c):
-                fit_score += 1
+    for i in range(len(TARGET)):
+        if char_list[i] == target_list[i]:
+            fit_score += 1
+
     return fit_score / float(len(TARGET))
 
 
@@ -80,7 +83,7 @@ def get_best_population(population_list):
 
 
 # A two parent mating process. With a mutation option if you select type == 2
-def get_mate_child (mem1, mem2, type=1):
+def get_mate_child (mem1, mem2, type):
     _half_target = len(TARGET)/2    # First half of our member
     _remaining_target = len(TARGET) - len(TARGET)/2     # Second half of our member
 
@@ -91,11 +94,12 @@ def get_mate_child (mem1, mem2, type=1):
         return ''.join(new_member_chars)    # Return a combined word
 
     elif type == 2: # This two parent algo uses mutation. How do I introduce mutation proportion?
+
         parent_1 = list(mem1)[:_half_target]  # First half of our TARGET word
         parent_2 = list(mem2)[-_remaining_target:]  # Remaining half of our TARGET
-        parent_1.pop()
+        parent_1.remove(random.choice(parent_1))
         parent_1.append(random.choice(TARGET_BUILD))
-        parent_2.pop()
+        parent_2.remove(random.choice(parent_2))
         parent_2.append(random.choice(TARGET_BUILD))
         new_member_chars = parent_1 + parent_2
         return ''.join(new_member_chars)  # Return a combined word
@@ -112,7 +116,9 @@ def mating_season (pop_to_mate):
             '_fit_score': calc_fitness_score(better_baby) # Get new fitness score for this
               }
         )
-    return _new_population[:5000]
+
+    newlist = sorted(_new_population, key=lambda k: k['_fit_score'])
+    return newlist[:5000]
 
 
 
@@ -150,6 +156,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         for member in population:
             print member['_name'] + "  " + str(member['_fit_score'])
-  ```
+```
   
   
