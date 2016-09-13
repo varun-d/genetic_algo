@@ -2,11 +2,12 @@ import random
 import string
 from math import sqrt
 
-TARGET = 'varun'    # Target word or let's call it sequence of characters. For now only ASCII lowercase, no space or uppercase :)
+TARGET = 'hospital'    # Target word or let's call it sequence of characters. For now only ASCII lowercase, no space or uppercase :)
 POP_SIZE = 1000     # Population size
 MUTATION = 0.01     # Mutation proportion
 population = []     # Our world as an array of member dictionaries, with 'member' and 'fit_score'. 'member' is a char seq (a word)
 SD_MULTIPLIER = 1
+ELITE = 0.2     # Elitism: keep top 20% in existing generation for next generation.
 TARGET_BUILD = string.ascii_lowercase
 
 # Manually calculating Standard Deviation. Don't want to import any library.
@@ -57,7 +58,7 @@ def calc_fitness_score(word):
     return fit_score / float(len(TARGET))
 
 
-def natural_selection(population_list):
+def natural_selection(population_list, elite):
     """
     Takes in current population generation and sends back new generation with children and previous population.
     :param population_list:
@@ -71,13 +72,16 @@ def natural_selection(population_list):
 
     for member in population_list:
         f_prob = (member['_fit_score']/fmax) * 100  # fi/fmax * 100 gives us the probability. Dump it all in a bucket for easy selection.
-        if f_prob > 0:  # Add all members with prob > 0 back to the pool. todo I'm sure this will create problems.
-            _natural_selection.append(member)
-
         for i in range(int(f_prob)): # Duplicate each member the number of times their f_prob. I'm sure there's a better way to do this.
             _mate_pool.append(member)
 
-    # Start mating process here
+    # Get top ELITE members into _natural_selection before doing random baby making
+    sorted_population = sorted(population_list, key=lambda k: k['_fit_score'])
+    elite_range = int(len(sorted_population) * elite)
+    _natural_selection =  sorted_population[-elite_range:] # Get from last sorted awesome members, these are in asc order.
+
+
+    # Start mating process here. Put on some baby making music.
     for _ in range(POP_SIZE - len(_natural_selection)): # To keep our new population under control, conduct control mating.
         parent_member_A = random.choice(_mate_pool)
         parent_member_B = random.choice(_mate_pool)
@@ -196,17 +200,17 @@ if __name__ == '__main__':
     generation = 0
 
     try:
-        # while TARGET not in population:
-        while generation < 10:
-            population = natural_selection(population)
+        while not any(member['_name'] == TARGET for member in population):
+        # while generation < 10:
+            population = natural_selection(population, ELITE)
 
             # Show Health (Mean) and Generation number
             all_fitness_scores = [ m['_fit_score'] for m in population ]
-            print calc_mean(all_fitness_scores)
 
             generation += 1
             print ("Running generation number: %d" % generation)
-            print ("Population size is: %d" % len(population) )
+            # print ("Mean: %f, SD: %f." % (calc_mean(all_fitness_scores), calc_std(all_fitness_scores)))
+            # print ("Mean: %f, SD: %f." % (calc_mean(all_fitness_scores), calc_std(all_fitness_scores)))
     except KeyboardInterrupt:
         for member in population:
             print member['_name'] + "  " + str(member['_fit_score'])
@@ -214,34 +218,3 @@ if __name__ == '__main__':
     for member in population:
         print member['_name'] + "  " + str(member['_fit_score'])
 
-
-
-
-"""
-# Adding one child at a time ...
-
-        while TARGET not in population:
-
-            mating_pool_ranking = natural_selection(population)
-
-            population = get_unique(mating_pool_ranking)
-
-            # NEXT: Randomly mate two from mating_pool and add to population
-            new_member = get_child(mating_pool_ranking)
-            population.append({
-                '_name': new_member,
-                '_fit_score':calc_fitness_score(new_member)
-            })
-
-            # Show Health (Mean) and Generation number
-            all_fitness_scores = [m['_fit_score'] for m in population]
-            print calc_mean(all_fitness_scores)
-
-            generation += 1
-            print ("Running generation number: %d" % generation)
-            print ("Population size is: %d" % len(population) )
-    except KeyboardInterrupt:
-        for member in population:
-            print member['_name'] + "  " + str(member['_fit_score'])
-
-"""
