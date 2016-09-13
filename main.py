@@ -1,5 +1,3 @@
-from multiprocessing import Process
-import urllib2
 import random
 import string
 from math import sqrt
@@ -60,15 +58,20 @@ def calc_fitness_score(word):
 
 
 def natural_selection(population_list):
-    _mate_pool = []
-    _natural_selection = []
+    """
+    Takes in current population generation and sends back new generation with children and previous population.
+    :param population_list:
+    :return:
+    """
+    _mate_pool = []     # The array holding members, the number of times their probability, used for random selection.
+    _natural_selection = []     # The new generation, which will be returned
     all_fitness_scores = [m['_fit_score'] for m in population_list]
 
     fmax = max(all_fitness_scores)
 
     for member in population_list:
         f_prob = (member['_fit_score']/fmax) * 100  # fi/fmax * 100 gives us the probability. Dump it all in a bucket for easy selection.
-        if f_prob > 0:  # Add all members with prob > 0 back to the pool
+        if f_prob > 0:  # Add all members with prob > 0 back to the pool. todo I'm sure this will create problems.
             _natural_selection.append(member)
 
         for i in range(int(f_prob)): # Duplicate each member the number of times their f_prob. I'm sure there's a better way to do this.
@@ -76,11 +79,13 @@ def natural_selection(population_list):
 
     # Start mating process here
     for _ in range(POP_SIZE - len(_natural_selection)): # To keep our new population under control, conduct control mating.
-        pass
+        parent_member_A = random.choice(_mate_pool)
+        parent_member_B = random.choice(_mate_pool)
+        child_name = get_mate_child(parent_member_A['_name'], parent_member_B['_name'], 2)
+        child_fitness = calc_fitness_score(child_name)
+        _natural_selection.append({'_name': child_name, '_fit_score': child_fitness})
 
-
-
-    return _mate_pool
+    return _natural_selection
 
 def get_best_population(population_list):
     """
@@ -112,11 +117,10 @@ def get_mate_child (mem1, mem2, type):
 
         parent_1 = list(mem1)[:_half_target]  # First half of our TARGET word
         parent_2 = list(mem2)[-_remaining_target:]  # Remaining half of our TARGET
-        parent_1.remove(random.choice(parent_1))
-        parent_1.append(random.choice(TARGET_BUILD))
-        parent_2.remove(random.choice(parent_2))
-        parent_2.append(random.choice(TARGET_BUILD))
+
         new_member_chars = parent_1 + parent_2
+        new_member_chars.remove(random.choice(new_member_chars))  # Remove random char. todo, can this be a problem?
+        new_member_chars.append(random.choice(TARGET_BUILD))    # Add random random char todo, we aren't adding a new char to the same location
         return ''.join(new_member_chars)  # Return a combined word
 
 
@@ -192,13 +196,9 @@ if __name__ == '__main__':
     generation = 0
 
     try:
-        while TARGET not in population:
-
-            mating_pool_ranking = natural_selection(population)
-
-            population = get_children(mating_pool_ranking)  # Create new population with children
-
-            population.extend( get_unique(mating_pool_ranking) )  # Add the old healthy selections
+        # while TARGET not in population:
+        while generation < 10:
+            population = natural_selection(population)
 
             # Show Health (Mean) and Generation number
             all_fitness_scores = [ m['_fit_score'] for m in population ]
@@ -211,6 +211,8 @@ if __name__ == '__main__':
         for member in population:
             print member['_name'] + "  " + str(member['_fit_score'])
 
+    for member in population:
+        print member['_name'] + "  " + str(member['_fit_score'])
 
 
 
