@@ -208,9 +208,9 @@ if __name__ == '__main__':
             all_fitness_scores = [ m['_fit_score'] for m in population ]
 
             generation += 1
-            print ("Running generation number: %d" % generation)
+            # print ("Running generation number: %d" % generation)
             # print ("Mean: %f, SD: %f." % (calc_mean(all_fitness_scores), calc_std(all_fitness_scores)))
-            # print ("Mean: %f, SD: %f." % (calc_mean(all_fitness_scores), calc_std(all_fitness_scores)))
+            print ("%f" % calc_mean(all_fitness_scores))
     except KeyboardInterrupt:
         for member in population:
             print member['_name'] + "  " + str(member['_fit_score'])
