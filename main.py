@@ -3,7 +3,7 @@ import string
 from math import sqrt
 
 TARGET = 'hospital'    # Target word or let's call it sequence of characters. For now only ASCII lowercase, no space or uppercase :)
-POP_SIZE = 1000     # Population size
+POP_SIZE = 500     # Population size
 MUTATION = 0.01     # Mutation proportion
 population = []     # Our world as an array of member dictionaries, with 'member' and 'fit_score'. 'member' is a char seq (a word)
 SD_MULTIPLIER = 1
@@ -12,11 +12,6 @@ TARGET_BUILD = string.ascii_lowercase
 
 # Manually calculating Standard Deviation. Don't want to import any library.
 def calc_std(num_list):
-    """
-    Accepts list of numbers and returns a single number
-    :param num_list: list of numbers, [1,2,3,4]
-    :return: Population Standard Dev (/N)
-    """
     _sum = sum(num_list)
     _N = len(num_list)
     _mean = _sum / float(_N)
@@ -28,7 +23,7 @@ def calc_std(num_list):
 
     return sqrt (ss / float(_N))
 
-
+# Manually calculating Average. Don't want to import any library.
 def calc_mean(num_list):
     _sum = sum(num_list)
     _N = len(num_list)
@@ -91,21 +86,6 @@ def natural_selection(population_list, elite):
 
     return _natural_selection
 
-def get_best_population(population_list):
-    """
-    Returns truncated population
-    :param population_list: main population
-    :return: new truncated population
-    """
-    new_trunc_pop = []
-    all_fitness_scores = [ m['_fit_score'] for m in population_list ]
-    std_dev = calc_std(all_fitness_scores)
-    for member in population_list:
-        if member['_fit_score'] > (std_dev * SD_MULTIPLIER):
-            new_trunc_pop.append(member)
-    return new_trunc_pop
-
-
 # A two parent mating process. With a mutation option if you select type == 2
 def get_mate_child (mem1, mem2, type):
     _half_target = len(TARGET)/2    # First half of our member
@@ -128,60 +108,12 @@ def get_mate_child (mem1, mem2, type):
         return ''.join(new_member_chars)  # Return a combined word
 
 
-def mating_season (pop_to_mate):
-    _new_population = []
-    for i in range(len(pop_to_mate)-1):
-        _new_population.append(pop_to_mate[i]) # Add the first parent to our new population too
-        _new_population.append(pop_to_mate[i+1])    # Add the second parent to our new population too
-        better_baby = get_mate_child(pop_to_mate[i]['_name'], pop_to_mate[i + 1]['_name'], 2)
-        _new_population.append(
-            { '_name': better_baby,
-            '_fit_score': calc_fitness_score(better_baby) # Get new fitness score for this
-              }
-        )
-
-    newlist = sorted(_new_population, key=lambda k: k['_fit_score'])
-    return newlist[:5000]
-
-def get_child(mating_pool):
-    """
-    Randomly select two members from mating_pool, mate and add mutation and send back child to population
-    :param mating_pool: is the list of members repeated number of times of their probability to be picked up
-    :return: child member to be appended to population
-    """
-    parent_member_A = random.choice(mating_pool)
-    parent_member_B = random.choice(mating_pool)
-
-    return get_mate_child(parent_member_A['_name'], parent_member_B['_name'], 2)
-
-def get_children(mating_pool):
-    _children = []
-    for i in range(POP_SIZE):
-        parent_member_A = random.choice(mating_pool)
-        parent_member_B = random.choice(mating_pool)
-        child_name = get_mate_child(parent_member_A['_name'], parent_member_B['_name'], 1)
-        child_fitness = calc_fitness_score(child_name)
-        _children.append({'_name': child_name, '_fit_score': child_fitness})
-
-    return _children
-
-
-
-
-def get_unique(mating_pool):
-    """
-    Reverse process to get unique members back into the population that were selected for mating.
-    :param mating_poop: Mating pool list with repeating members as per their probability
-    :return: population list with uniques
-    """
-    return [dict(y) for y in set(tuple(x.items()) for x in mating_pool)]
-
 if __name__ == '__main__':
 
-    # Generate First Random population
-    population = generate_population(population)
+    generation = 0      # Variable to keep track of generations
+    population = generate_population(population)        # Generate first random population
 
-    # Get first fitness score
+    # Generate fitness score for members in our population
     pop_with_score = []
     for member in population:
         pop_with_score.append(
@@ -190,31 +122,38 @@ if __name__ == '__main__':
              }
         )
 
-    population = pop_with_score
+    population = pop_with_score     # Rename our population with fit scores back to 'population'
 
+    # Uncomment below to print your initial population with fitness scores
     # for member in population:
     #     print member['_name'] + "  " + str(member['_fit_score'])
     #
     # exit("Check Fitness")
 
-    generation = 0
-
+    # Try-Except block to print out population data if we have to stop our algorithm because of non-convergence
     try:
         while not any(member['_name'] == TARGET for member in population):
-        # while generation < 10:
+            # Important! The above statement means stop when *any* population member matches our target
+
+            # The main function that does selection, mating and returns new population generation
             population = natural_selection(population, ELITE)
 
-            # Show Health (Mean) and Generation number
+            # Get *list* of all fitness scores of current generation
             all_fitness_scores = [ m['_fit_score'] for m in population ]
 
+            # Increment our generation number
             generation += 1
+
+            # Uncomment following statements for debug
             # print ("Running generation number: %d" % generation)
             # print ("Mean: %f, SD: %f." % (calc_mean(all_fitness_scores), calc_std(all_fitness_scores)))
-            print ("%f" % calc_mean(all_fitness_scores))
+            print ("%f" % calc_mean(all_fitness_scores))        # Print total fitness mean for each generation
     except KeyboardInterrupt:
+        # In stopping a non-converging GA, print the last known population with fitness scores
         for member in population:
             print member['_name'] + "  " + str(member['_fit_score'])
 
+    # On termination condition (success) print last population with fitness scores
     for member in population:
         print member['_name'] + "  " + str(member['_fit_score'])
 

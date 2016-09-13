@@ -1,9 +1,9 @@
 # genetic_algo
 Genetic Algorithm Playground
 
-First ever GA written after a 20 minute crash course by Daniel Shiffman. Spoiler alert, the following code does't work:
+http://read.varundhanwantri.com/genetic-algorithm-tutorial/
+PS: The below code is my first iteration. Avoid the multiprocessing import.
 
-Work in progress and new code will be shared here soon.
 
 ```python
 from multiprocessing import Process
